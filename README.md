@@ -8,5 +8,7 @@ This project is:
 
 3°/ Add the following Manager into your {catalina_home}/conf/context.xml
 
-<Manager className="org.apache.tomcat.session.redis.RedisClusterSessionManager" 
-    nodes="172.16.50.12:7000,172.16.50.12:7001,172.16.50.12:7002" /> 
+```xml
+    <Manager className="org.apache.tomcat.session.redis.RedisClusterSessionManager" 
+        nodes="172.16.50.12:7000,172.16.50.12:7001,172.16.50.12:7002" /> 
+```
