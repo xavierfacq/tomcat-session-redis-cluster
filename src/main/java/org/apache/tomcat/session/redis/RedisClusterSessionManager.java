@@ -36,7 +36,8 @@ import redis.clients.jedis.Protocol;
  */
 public class RedisClusterSessionManager extends ManagerBase {
 
-	private final Log log = LogFactory.getLog(RedisClusterSessionManager.class);
+	private final static String prefix_key = "jedis_tomcat_session_";
+	private final static Log log = LogFactory.getLog(RedisClusterSessionManager.class);
 
 	// configuration
 	private String nodes = null;
@@ -214,7 +215,7 @@ public class RedisClusterSessionManager extends ManagerBase {
 	}
 
 	protected static String buildSessionKey(String sessionId) {
-		return sessionId == null ? null : new StringBuilder("jedis_tomcat_session_").append(sessionId).toString();
+		return sessionId == null ? null : new StringBuilder(prefix_key).append(sessionId).toString();
 	}
 
 	private Map<String, Object> getMap(String sessionId) {
