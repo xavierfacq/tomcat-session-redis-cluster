@@ -223,6 +223,10 @@ public class RedisClusterSession extends StandardSession {
         if (thisAccessedTime != null) {
             this.thisAccessedTime = thisAccessedTime;
         }
+        Integer maxInactiveInterval = (Integer) attrs.remove("session:maxInactiveInterval");
+        if (maxInactiveInterval != null) {
+            this.maxInactiveInterval = maxInactiveInterval;
+        }
         Boolean isValid = (Boolean) attrs.remove("session:isValid");
         if (isValid != null) {
             this.isValid = isValid;
