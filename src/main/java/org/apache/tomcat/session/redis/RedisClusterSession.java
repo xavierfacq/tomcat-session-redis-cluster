@@ -48,7 +48,11 @@ public class RedisClusterSession extends StandardSession {
     @Override
     public void setId(String id, boolean notify) {
         super.setId(id, notify);
-        manager.getJedisCluster().hset(getJedisSessionKey(), "session:id", id);
+        try {
+        	manager.getJedisCluster().hset(getJedisSessionKey(), "session:id", RedisClusterSessionManager.toString(id));
+		} catch (Exception exception) {
+			log.error("Cannot set Creation Time", exception);
+		}
     }
 
     public void delete() {
