@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
@@ -86,7 +87,7 @@ public class RedisClusterSessionManager extends ManagerBase {
 		session.setNew(true);
 		session.setValid(true);
 		session.setCreationTime(System.currentTimeMillis());
-		session.setMaxInactiveInterval(maxInactiveInterval);
+		session.setMaxInactiveInterval(((Context) getContainer()).getSessionTimeout() * 60);
 
 		if (sessionId == null) {
 			sessionId = generateSessionId();
@@ -223,7 +224,7 @@ public class RedisClusterSessionManager extends ManagerBase {
 
 		try {
 			Map<String, String> entries = jedisCluster.hgetAll(buildSessionKey(sessionId));
-			if(entries != null) {
+			if(entries != null && !entries.isEmpty()) {
 				for(Entry<String, String> entry : entries.entrySet()) {
 					attrs.put(entry.getKey(), fromString(entry.getValue()));
 				}
