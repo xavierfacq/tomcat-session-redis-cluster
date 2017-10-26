@@ -1,12 +1,16 @@
-# tomcat-session-redis-cluster
+# Store your Tomcat sessions in your Redis Cluster
 
-This project provides an Apache Tomcat 7 SessionManager able to save and restore sessions into a Redis cluster, using the Jedis client.
+This project provides an Apache Tomcat 7 Manager able to save and restore sessions into a [Redis cluster](https://redis.io/topics/cluster-spec), using the [Jedis](https://github.com/xetorthio/jedis) client.
 This manager implements the serialization for authType and Principal, that can be usefull when a BASIC_AUTH is enabled.
+Redis operations are defered in executors for maximun fluidity.
 
-Requirements: a configured and running Redis cluster
+Requirements: 
+- JDK, Maven
+- an Apache Tomcat
+- a Redis cluster
 
 
-## How to get this Apache Tomcat 7 session manager
+## How do I use it?
 
 1°/ Clone this project
 
