@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
@@ -35,7 +36,7 @@ import redis.clients.jedis.Protocol;
  * @author xfacq
  *
  */
-public class RedisClusterSessionManager extends ManagerBase {
+public class RedisClusterSessionManager extends ManagerBase implements Lifecycle {
 
 	private final static String prefix_key = "jedis_tomcat_session_";
 	private final static Log log = LogFactory.getLog(RedisClusterSessionManager.class);
@@ -94,25 +95,28 @@ public class RedisClusterSessionManager extends ManagerBase {
 		}
 
 		session.setId(sessionId);
-		session.save();
 
 		return session;
 	}
 
 	@Override
 	public Session findSession(String sessionId) throws IOException {
-		Session session = super.findSession(sessionId);
+		RedisClusterSession session = (RedisClusterSession)super.findSession(sessionId);
 
         if (session == null && sessionId != null) {
 			Map<String, Object> attrs = getMap(sessionId);
+			
 			if (attrs.isEmpty() || !Boolean.valueOf(String.valueOf(attrs.get("session:isValid")))) {
                 return null;
             }
 
-			session = (RedisClusterSession) createEmptySession();
-            session.setId(sessionId);
-        	((RedisClusterSession)session).load(attrs);
+			session = createEmptySession();
+			session.load(attrs);
+			session.setId(sessionId);
 
+            session.tellNew();
+            session.activate();
+			
             session.access();
             session.endAccess();
 		}
@@ -121,7 +125,7 @@ public class RedisClusterSessionManager extends ManagerBase {
 	}
 
 	@Override
-	public Session createEmptySession() {
+	public RedisClusterSession createEmptySession() {
 		return new RedisClusterSession(this);
 	}
 
@@ -130,9 +134,16 @@ public class RedisClusterSessionManager extends ManagerBase {
 		super.remove(session, update);
 
 		if (session.getIdInternal() != null) {
-			((RedisClusterSession)session).delete();
+			jedisCluster.del(((RedisClusterSession)session).getJedisSessionKey());
 		}
 	}
+
+	@Override
+	public void add(Session session) {
+		super.add(session);
+		((RedisClusterSession)session).save();
+	}
+
 
 	@Override
 	protected void startInternal() throws LifecycleException {
@@ -176,8 +187,6 @@ public class RedisClusterSessionManager extends ManagerBase {
 
 	@Override
 	protected void stopInternal() throws LifecycleException {
-		super.stopInternal();
-
 		setState(LifecycleState.STOPPING);
 
 		try {
@@ -188,6 +197,8 @@ public class RedisClusterSessionManager extends ManagerBase {
 			log.error("Cannot stop", e);
 			throw new LifecycleException(e);
 		}
+
+		super.stopInternal();
 	}
 
 	protected Object fromString(String s) throws IOException, ClassNotFoundException {
