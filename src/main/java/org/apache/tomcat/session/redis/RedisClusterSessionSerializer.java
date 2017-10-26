@@ -12,8 +12,8 @@ import org.apache.catalina.util.CustomObjectInputStream;
 
 public class RedisClusterSessionSerializer {
 
-	public static final String REDIS_NULL_VALUE = "__null__";
 	private ClassLoader classLoader;
+	private static final String REDIS_NULL_VALUE = "__null__";
 
 	public RedisClusterSessionSerializer(ClassLoader classLoader) {
 		super();

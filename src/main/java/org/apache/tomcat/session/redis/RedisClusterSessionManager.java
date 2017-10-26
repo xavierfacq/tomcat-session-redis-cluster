@@ -109,14 +109,18 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
             }
 
 			session = createEmptySession();
+
+			// load backed params
 			session.load(attrs);
+
+			// update access
+			session.access();
+			session.endAccess();
+
+			// this will fire the save
 			session.setId(sessionId);
 
-            session.tellNew();
             session.activate();
-			
-            session.access();
-            session.endAccess();
 		}
 
 		return session;

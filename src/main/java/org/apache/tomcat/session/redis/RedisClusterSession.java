@@ -65,6 +65,10 @@ public class RedisClusterSession extends StandardSession {
 				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
 				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
 				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
+
+				if (getExpire() > 0) {
+					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+				}
 			} catch (Exception exception) {
 				log.error("Cannot set Creation Time", exception);
 			}
@@ -80,7 +84,7 @@ public class RedisClusterSession extends StandardSession {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:thisAccessedTime",
 						getSerializer().serialize(thisAccessedTime));
 
-				if (getExpire() >= 0) {
+				if (getExpire() > 0) {
 					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
 				}
 			} catch (Exception exception) {
@@ -97,10 +101,6 @@ public class RedisClusterSession extends StandardSession {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:maxInactiveInterval",
 						getSerializer().serialize(maxInactiveInterval));
-
-				if (getExpire() >= 0) {
-					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
-				}
 			} catch (Exception exception) {
 				log.error("Cannot set Max Inactive Interval", exception);
 			}
@@ -146,6 +146,10 @@ public class RedisClusterSession extends StandardSession {
 				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
 				newMap.put("session:isNew", getSerializer().serialize(isNew));
 				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
+				
+				if (getExpire() > 0) {
+					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+				}
 			} catch (Exception exception) {
 				log.error("Cannot set end access", exception);
 			}
@@ -203,7 +207,7 @@ public class RedisClusterSession extends StandardSession {
 
 			getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
 
-			if (getExpire() >= 0) {
+			if (getExpire() > 0) {
 				getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
 			}
 		} catch (Exception exception) {
@@ -264,7 +268,8 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	private int getExpire() {
-		return ((Context) manager.getContainer()).getSessionTimeout() * 60;
+		int expire = ((Context) manager.getContainer()).getSessionTimeout() * 60;
+		return expire > 0 ? expire : 0;
 	}
 
 	protected String getJedisSessionKey() {
