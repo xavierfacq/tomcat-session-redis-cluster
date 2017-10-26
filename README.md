@@ -6,7 +6,7 @@ This manager implements the serialization for authType and Principal, that can b
 Requirements: a configured and running Redis cluster
 
 
-##How to get this Apache Tomcat 7 session manager
+## How to get this Apache Tomcat 7 session manager
 
 1°/ Clone this project
 
