@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -132,10 +133,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 	@Override
 	public void remove(Session session, boolean update) {
 		super.remove(session, update);
-
-		if (session.getIdInternal() != null) {
-			jedisCluster.del(((RedisClusterSession)session).getJedisSessionKey());
-		}
+		((RedisClusterSession)session).delete();
 	}
 
 	@Override
@@ -143,7 +141,6 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		super.add(session);
 		((RedisClusterSession)session).save();
 	}
-
 
 	@Override
 	protected void startInternal() throws LifecycleException {
@@ -204,7 +201,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 	protected Object fromString(String s) throws IOException, ClassNotFoundException {
 		Object o = null;
 		if (s != null) {
-			byte[] data = Base64.decode(s);
+			byte[] data = Base64.getDecoder().decode(s);
 	        BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(data));
 	        ObjectInputStream ois = new CustomObjectInputStream(bis, classLoader);
 			o = ois.readObject();
@@ -219,7 +216,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		 oos.writeObject(o);
 		 oos.flush();
 		 oos.close();
-		 return new String(Base64.encode(baos.toByteArray()));
+		 return new String(Base64.getEncoder().encode(baos.toByteArray()));
 	}
 
 	protected static String buildSessionKey(Session session) {

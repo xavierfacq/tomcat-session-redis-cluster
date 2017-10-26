@@ -208,6 +208,16 @@ public class RedisClusterSession extends StandardSession {
 		}
 	}
 
+	protected void delete() {
+		if (this.id != null) {
+			try {
+				getManager().getJedisCluster().del(getJedisSessionKey());
+			} catch (Exception exception) {
+				log.error("Cannot set authType", exception);
+			}
+		}
+	}
+	
 	public void load(Map<String, Object> attrs) {
 		if (attrs == null)
 			return;
