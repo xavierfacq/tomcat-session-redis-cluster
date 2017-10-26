@@ -1,13 +1,7 @@
 package org.apache.tomcat.session.redis;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URI;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,7 +16,6 @@ import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
 import org.apache.catalina.Session;
 import org.apache.catalina.session.ManagerBase;
-import org.apache.catalina.util.CustomObjectInputStream;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -46,7 +39,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 	private String nodes = null;
 	private int timeout = Protocol.DEFAULT_TIMEOUT;
 
-	private ClassLoader classLoader;
+	private RedisClusterSessionSerializer serializer;
 	private JedisCluster jedisCluster = null;
 
 	public String getNodes() {
@@ -67,6 +60,10 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 
 	public JedisCluster getJedisCluster() {
 		return jedisCluster;
+	}
+
+	public RedisClusterSessionSerializer getSerializer() {
+		return serializer;
 	}
 
 	@Override
@@ -178,7 +175,10 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		}
 
 		if (loader != null) {
-			classLoader = loader.getClassLoader();
+			serializer = new RedisClusterSessionSerializer(loader.getClassLoader());
+		} else {
+			log.error("Cannot find loader");
+			throw new LifecycleException("Cannot find loader");
 		}
 	}
 
@@ -198,27 +198,6 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		super.stopInternal();
 	}
 
-	protected Object fromString(String s) throws IOException, ClassNotFoundException {
-		Object o = null;
-		if (s != null) {
-			byte[] data = Base64.getDecoder().decode(s);
-	        BufferedInputStream bis = new BufferedInputStream(new ByteArrayInputStream(data));
-	        ObjectInputStream ois = new CustomObjectInputStream(bis, classLoader);
-			o = ois.readObject();
-			ois.close();
-		}
-		return o;
-	}
-
-	protected static String toString(Object o) throws IOException {
-		 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		 ObjectOutputStream oos = new ObjectOutputStream(baos);
-		 oos.writeObject(o);
-		 oos.flush();
-		 oos.close();
-		 return new String(Base64.getEncoder().encode(baos.toByteArray()));
-	}
-
 	protected static String buildSessionKey(Session session) {
 		return session == null ? null : buildSessionKey(session.getId());
 	}
@@ -234,7 +213,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 			Map<String, String> entries = jedisCluster.hgetAll(buildSessionKey(sessionId));
 			if(entries != null && !entries.isEmpty()) {
 				for(Entry<String, String> entry : entries.entrySet()) {
-					attrs.put(entry.getKey(), fromString(entry.getValue()));
+					attrs.put(entry.getKey(), serializer.deserialize(entry.getValue()));
 				}
 			}
 		} catch (Exception e) {

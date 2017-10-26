@@ -28,6 +28,10 @@ public class RedisClusterSession extends StandardSession {
 		super(manager);
 	}
 
+	private RedisClusterSessionSerializer getSerializer() {
+		return getManager().getSerializer();
+	}
+
 	@Override
 	public RedisClusterSessionManager getManager() {
 		return (RedisClusterSessionManager) manager;
@@ -35,12 +39,11 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public Object getAttribute(String name) {
-		if (this.id != null) {
+		if (this.id != null && name != null) {
 			try {
-				return getManager().fromString(getManager().getJedisCluster().hget(getJedisSessionKey(), name));
+				return getSerializer().deserialize(getManager().getJedisCluster().hget(getJedisSessionKey(), name));
 			} catch (Exception exception) {
 				log.error("Cannot get attribute", exception);
-				return null;
 			}
 		}
 		return null;
@@ -58,9 +61,9 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				Map<String, String> newMap = new HashMap<String, String>(3);
-				newMap.put("session:creationTime", RedisClusterSessionManager.toString(creationTime));
-				newMap.put("session:lastAccessedTime", RedisClusterSessionManager.toString(lastAccessedTime));
-				newMap.put("session:thisAccessedTime", RedisClusterSessionManager.toString(thisAccessedTime));
+				newMap.put("session:creationTime", getSerializer().serialize(creationTime));
+				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
+				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
 				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
 			} catch (Exception exception) {
 				log.error("Cannot set Creation Time", exception);
@@ -75,7 +78,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:thisAccessedTime",
-						RedisClusterSessionManager.toString(thisAccessedTime));
+						getSerializer().serialize(thisAccessedTime));
 
 				if (getExpire() >= 0) {
 					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
@@ -93,7 +96,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:maxInactiveInterval",
-						RedisClusterSessionManager.toString(maxInactiveInterval));
+						getSerializer().serialize(maxInactiveInterval));
 
 				if (getExpire() >= 0) {
 					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
@@ -111,7 +114,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:isValid",
-						RedisClusterSessionManager.toString(isValid));
+						getSerializer().serialize(isValid));
 			} catch (Exception exception) {
 				log.error("Cannot set is valid", exception);
 			}
@@ -125,7 +128,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:isNew",
-						RedisClusterSessionManager.toString(isNew));
+						getSerializer().serialize(isNew));
 			} catch (Exception exception) {
 				log.error("Cannot set is new", exception);
 			}
@@ -139,9 +142,9 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				Map<String, String> newMap = new HashMap<String, String>(3);
-				newMap.put("session:lastAccessedTime", RedisClusterSessionManager.toString(lastAccessedTime));
-				newMap.put("session:thisAccessedTime", RedisClusterSessionManager.toString(thisAccessedTime));
-				newMap.put("session:isNew", RedisClusterSessionManager.toString(isNew));
+				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
+				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
+				newMap.put("session:isNew", getSerializer().serialize(isNew));
 				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
 			} catch (Exception exception) {
 				log.error("Cannot set end access", exception);
@@ -156,7 +159,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null && name != null && value != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), name,
-						RedisClusterSessionManager.toString(value));
+						getSerializer().serialize(value));
 			} catch (Exception exception) {
 				log.error("Cannot set attribute", exception);
 			}
@@ -177,25 +180,25 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	protected void save() {
+		if (this.id == null) return;
+
 		try {
 			Map<String, String> newMap = new HashMap<String, String>();
-			newMap.put("session:creationTime", RedisClusterSessionManager.toString(creationTime));
-			newMap.put("session:lastAccessedTime", RedisClusterSessionManager.toString(lastAccessedTime));
-			newMap.put("session:thisAccessedTime", RedisClusterSessionManager.toString(thisAccessedTime));
-			newMap.put("session:maxInactiveInterval", RedisClusterSessionManager.toString(maxInactiveInterval));
-			newMap.put("session:isValid", RedisClusterSessionManager.toString(isValid));
-			newMap.put("session:isNew", RedisClusterSessionManager.toString(isNew));
-			newMap.put("session:authType", authType == null ? null : RedisClusterSessionManager.toString(authType));
-			newMap.put("session:principal",
-					principal == null ? null
-							: RedisClusterSessionManager
-									.toString(SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
+
+			newMap.put("session:creationTime", getSerializer().serialize(creationTime));
+			newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
+			newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
+			newMap.put("session:maxInactiveInterval", getSerializer().serialize(maxInactiveInterval));
+			newMap.put("session:isValid", getSerializer().serialize(isValid));
+			newMap.put("session:isNew", getSerializer().serialize(isNew));
+			newMap.put("session:authType", getSerializer().serialize(authType));
+			newMap.put("session:principal", getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
 
 			for (Enumeration<String> e = getAttributeNames(); e.hasMoreElements();) {
 				String key = e.nextElement();
+				if(key == null) continue;
 				Object o = super.getAttribute(key);
-				if (o != null)
-					newMap.put(key, RedisClusterSessionManager.toString(o));
+				newMap.put(key, getSerializer().serialize(o));
 			}
 
 			getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
@@ -209,47 +212,51 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	protected void delete() {
-		if (this.id != null) {
-			try {
-				getManager().getJedisCluster().del(getJedisSessionKey());
-			} catch (Exception exception) {
-				log.error("Cannot set authType", exception);
-			}
+		if (this.id == null) return;
+
+		try {
+			getManager().getJedisCluster().del(getJedisSessionKey());
+		} catch (Exception exception) {
+			log.error("Cannot set authType", exception);
 		}
 	}
-	
-	public void load(Map<String, Object> attrs) {
-		if (attrs == null)
-			return;
+
+	protected void load(Map<String, Object> attrs) {
 		Long creationTime = (Long) attrs.remove("session:creationTime");
 		if (creationTime != null) {
 			this.creationTime = creationTime;
 		}
+
 		Long lastAccessedTime = (Long) attrs.remove("session:lastAccessedTime");
 		if (lastAccessedTime != null) {
 			this.lastAccessedTime = lastAccessedTime;
 		}
+
 		Long thisAccessedTime = (Long) attrs.remove("session:thisAccessedTime");
 		if (thisAccessedTime != null) {
 			this.thisAccessedTime = thisAccessedTime;
 		}
+
 		Integer maxInactiveInterval = (Integer) attrs.remove("session:maxInactiveInterval");
 		if (maxInactiveInterval != null) {
 			this.maxInactiveInterval = maxInactiveInterval;
 		}
+
 		Boolean isValid = (Boolean) attrs.remove("session:isValid");
 		if (isValid != null) {
 			this.isValid = isValid;
 		}
+
 		Boolean isNew = (Boolean) attrs.remove("session:isNew");
 		if (isNew != null) {
 			this.isNew = isNew;
 		}
+
 		String authType = (String) attrs.remove("session:authType");
 		this.authType = authType;
 
 		SerializablePrincipal principal = (SerializablePrincipal) attrs.remove("session:principal");
-		this.principal = principal.getPrincipal();
+		this.principal = principal == null ? null : principal.getPrincipal();
 
 		for (Entry<String, Object> entry : attrs.entrySet()) {
 			setAttribute(entry.getKey(), entry.getValue(), false);
@@ -271,7 +278,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:authType",
-						authType == null ? null : RedisClusterSessionManager.toString(authType));
+						getSerializer().serialize(authType));
 			} catch (Exception exception) {
 				log.error("Cannot set authType", exception);
 			}
@@ -285,9 +292,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getJedisCluster().hset(getJedisSessionKey(), "session:principal",
-						principal == null ? null
-								: RedisClusterSessionManager
-										.toString(SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
+						getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
 			} catch (Exception exception) {
 				log.error("Cannot set principal", exception);
 			}
