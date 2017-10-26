@@ -2,12 +2,12 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>org.apache.tomcat.session.redis</groupId>
-	<artifactId>redis-cluster-session</artifactId>
+	<groupId>org.apache.tomcat</groupId>
+	<artifactId>tomcat-session-redis-cluster</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>redis-cluster-session</name>
+	<name>tomcat-session-redis-cluster</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
@@ -39,7 +39,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>redis-cluster-session</finalName>
+		<finalName>tomcat-session-redis-cluster</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
