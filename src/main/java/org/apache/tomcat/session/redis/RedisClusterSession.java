@@ -5,9 +5,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.ha.session.SerializablePrincipal;
@@ -26,8 +23,6 @@ public class RedisClusterSession extends StandardSession {
 
 	private static final long serialVersionUID = -2518607181636076487L;
 	private static final Log log = LogFactory.getLog(RedisClusterSession.class);
-
-	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	public RedisClusterSession(RedisClusterSessionManager manager) {
 		super(manager);
@@ -52,25 +47,19 @@ public class RedisClusterSession extends StandardSession {
 		super.setCreationTime(time);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-	    			try {
-	    				Map<String, String> newMap = new HashMap<String, String>(3);
-	    				newMap.put("session:creationTime", getSerializer().serialize(creationTime));
-	    				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
-	    				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
-	    				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
+			try {
+				Map<String, String> newMap = new HashMap<String, String>(3);
+				newMap.put("session:creationTime", getSerializer().serialize(creationTime));
+				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
+				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
+				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
 
-	    				if (getExpire() > 0) {
-	    					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
-	    				}
-	    			} catch (Exception exception) {
-	    				log.error("Cannot set Creation Time", exception);
-	    				return false;
-	    			}
-	    			return true;
-	            }
-	        });
+				if (getExpire() > 0) {
+					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+				}
+			} catch (Exception exception) {
+				log.error("Cannot set Creation Time", exception);
+			}
 		}
 	}
 
@@ -79,22 +68,16 @@ public class RedisClusterSession extends StandardSession {
 		super.access();
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:thisAccessedTime",
-								getSerializer().serialize(thisAccessedTime));
-		
-						if (getExpire() > 0) {
-							getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
-						}
-					} catch (Exception exception) {
-						log.error("Cannot update access", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
+
+				if (getExpire() > 0) {
+					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+				}
+			} catch (Exception exception) {
+				log.error("Cannot update access", exception);
+			}
 		}
 	}
 
@@ -103,18 +86,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setMaxInactiveInterval(interval);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:maxInactiveInterval",
-								getSerializer().serialize(maxInactiveInterval));
-					} catch (Exception exception) {
-						log.error("Cannot set Max Inactive Interval", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:maxInactiveInterval", getSerializer().serialize(maxInactiveInterval));
+			} catch (Exception exception) {
+				log.error("Cannot set Max Inactive Interval", exception);
+			}
 		}
 	}
 
@@ -123,18 +100,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setValid(isValid);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:isValid",
-								getSerializer().serialize(isValid));
-					} catch (Exception exception) {
-						log.error("Cannot set is valid", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:isValid", getSerializer().serialize(isValid));
+			} catch (Exception exception) {
+				log.error("Cannot set is valid", exception);
+			}
 		}
 	}
 
@@ -143,18 +114,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setNew(isNew);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:isNew",
-								getSerializer().serialize(isNew));
-					} catch (Exception exception) {
-						log.error("Cannot set is new", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:isNew", getSerializer().serialize(isNew));
+			} catch (Exception exception) {
+				log.error("Cannot set is new", exception);
+			}
 		}
 	}
 
@@ -163,25 +128,19 @@ public class RedisClusterSession extends StandardSession {
 		super.endAccess();
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						Map<String, String> newMap = new HashMap<String, String>(3);
-						newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
-						newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
-						newMap.put("session:isNew", getSerializer().serialize(isNew));
-						getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
-						
-						if (getExpire() > 0) {
-							getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
-						}
-					} catch (Exception exception) {
-						log.error("Cannot set end access", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				Map<String, String> newMap = new HashMap<String, String>(3);
+				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
+				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
+				newMap.put("session:isNew", getSerializer().serialize(isNew));
+				getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
+				
+				if (getExpire() > 0) {
+					getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+				}
+			} catch (Exception exception) {
+				log.error("Cannot set end access", exception);
+			}
 		}
 	}
 
@@ -190,18 +149,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setAttribute(name, value, notify);
 
 		if (this.id != null && name != null && value != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), name,
-								getSerializer().serialize(value));
-					} catch (Exception exception) {
-						log.error("Cannot set attribute", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), name, getSerializer().serialize(value));
+			} catch (Exception exception) {
+				log.error("Cannot set attribute", exception);
+			}
 		}
 	}
 
@@ -210,17 +163,11 @@ public class RedisClusterSession extends StandardSession {
 		super.removeAttributeInternal(name, notify);
 
 		if (this.id != null && name != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-				try {
-					getManager().getJedisCluster().hdel(getJedisSessionKey(), name);
-				} catch (Exception exception) {
-					log.error("Cannot remove attribute", exception);
-    				return false;
-				}
-    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster().hdel(getJedisSessionKey(), name);
+			} catch (Exception exception) {
+				log.error("Cannot remove attribute", exception);
+			}
 		}
 	}
 
@@ -246,17 +193,11 @@ public class RedisClusterSession extends StandardSession {
 				newMap.put(key, getSerializer().serialize(o));
 			}
 
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
-		
-					if (getExpire() > 0) {
-						getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
-					}
+			getManager().getJedisCluster().hmset(getJedisSessionKey(), newMap);
 
-					return true;
-	            }
-	        });
+			if (getExpire() > 0) {
+				getManager().getJedisCluster().expire(getJedisSessionKey(), getExpire());
+			}
 		} catch (Exception exception) {
 			log.error("Cannot save", exception);
 		}
@@ -265,19 +206,11 @@ public class RedisClusterSession extends StandardSession {
 	protected void delete() {
 		if (this.id == null) return;
 
-        executor.submit(new RedisCommandCallable<Boolean>() {
-            @Override protected Boolean execute() throws Exception {
-				try {
-					getManager().getJedisCluster().del(getJedisSessionKey());
-				} catch (Exception exception) {
-					log.error("Cannot set authType", exception);
-    				return false;
-				}
-    			return true;
-            }
-        });
-
-        recycleExecutor();
+		try {
+			getManager().getJedisCluster().del(getJedisSessionKey());
+		} catch (Exception exception) {
+			log.error("Cannot set authType", exception);
+		}
 	}
 
 	protected void load(Map<String, Object> attrs) {
@@ -336,18 +269,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setAuthType(authType);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:authType",
-								getSerializer().serialize(authType));
-					} catch (Exception exception) {
-						log.error("Cannot set authType", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
+			try {
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:authType", getSerializer().serialize(authType));
+			} catch (Exception exception) {
+				log.error("Cannot set authType", exception);
+			}
 		}
 	}
 
@@ -356,45 +283,12 @@ public class RedisClusterSession extends StandardSession {
 		super.setPrincipal(principal);
 
 		if (this.id != null) {
-	        executor.submit(new RedisCommandCallable<Boolean>() {
-	            @Override protected Boolean execute() throws Exception {
-					try {
-						getManager().getJedisCluster().hset(getJedisSessionKey(), "session:principal",
-								getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
-					} catch (Exception exception) {
-						log.error("Cannot set principal", exception);
-	    				return false;
-					}
-	    			return true;
-	            }
-	        });
-		}
-	}
-
-	private abstract class RedisCommandCallable<T> implements Callable<T> {
-		@Override
-		public T call() throws Exception {
 			try {
-				return execute();
-			} catch (Exception e) {
-				log.error("Cannot RedisCommandCallable", e);
+				getManager().getJedisCluster()
+					.hset(getJedisSessionKey(), "session:principal", getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
+			} catch (Exception exception) {
+				log.error("Cannot set principal", exception);
 			}
-			return null;
 		}
-
-		protected abstract T execute() throws Exception;
-	}
-
-	@Override
-	public void recycle() {
-		super.recycle();
-		recycleExecutor();
-	}
-
-	private void recycleExecutor() {
-		if(executor != null && !executor.isShutdown()) {
-			executor.shutdownNow();
-		}
-		executor = Executors.newSingleThreadExecutor();
 	}
 }
