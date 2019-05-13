@@ -146,12 +146,23 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setAttribute(String name, Object value, boolean notify) {
+		// NOTE: Null value is the same as removeAttribute() - checked & called by super.setAttribute()
+
+		// retrieve current value of this attribute
+		Object o = getAttribute(name);
+
 		super.setAttribute(name, value, notify);
 
 		if (this.id != null && name != null && value != null) {
 			try {
-				getManager().getJedisCluster()
-					.hset(getJedisSessionKey(), name, getSerializer().serialize(value));
+				String outboundValue = getSerializer().serialize(o);
+				String inboundValue = getSerializer().serialize(value);
+
+				// only hset() the cluster if the value has really changed
+				if(!outboundValue.equals(inboundValue)) {
+					getManager().getJedisCluster()
+						.hset(getJedisSessionKey(), name, inboundValue);
+				}
 			} catch (Exception exception) {
 				log.error("Cannot set attribute", exception);
 			}
