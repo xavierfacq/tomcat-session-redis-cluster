@@ -1,8 +1,7 @@
 # Store your Tomcat sessions in your Redis Cluster
 
-This project provides an Apache Tomcat 7 Manager able to save and restore sessions into a [Redis cluster](https://redis.io/topics/cluster-spec), using the [Jedis](https://github.com/xetorthio/jedis) client.
+This project provides an Apache Tomcat 7 Manager able to save and restore sessions into a [Redis cluster](https://redis.io/topics/cluster-spec), using the [Jedis](https://github.com/xetorthio/jedis) or [Lettuce](https://lettuce.io/) client.
 This manager implements the serialization for authType and Principal, that can be usefull when a BASIC_AUTH is enabled.
-Redis operations are defered in executors for maximun fluidity.
 
 Requirements: 
 - JDK, Maven
@@ -32,6 +31,10 @@ You can choose the implementation driver you prefer by setting the value of the 
 
 3.1 With Jedis
 
+Get more informations about Lettuce: 
+- https://github.com/xetorthio/jedis
+
+
 3.1.1 Install requested Jar files
 
 ```
@@ -49,6 +52,11 @@ You can choose the implementation driver you prefer by setting the value of the 
 ```
 
 3.1 With Lettuce
+
+Get more informations about Lettuce: 
+- https://lettuce.io/
+- https://github.com/lettuce-io
+
 
 3.1.1 Install requested Jar files
 
