@@ -1,13 +1,9 @@
 package org.apache.tomcat.session.redis;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Lifecycle;
@@ -16,14 +12,10 @@ import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Loader;
 import org.apache.catalina.Session;
 import org.apache.catalina.session.ManagerBase;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-
-import redis.clients.jedis.HostAndPort;
-import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.Protocol;
+import org.apache.tomcat.session.redis.impl.JedisClusterImpl;
+import org.apache.tomcat.session.redis.impl.LettuceClusterImpl;
 
 /**
  * 
@@ -32,15 +24,16 @@ import redis.clients.jedis.Protocol;
  */
 public class RedisClusterSessionManager extends ManagerBase implements Lifecycle {
 
-	private final static String prefix_key = "jedis_tomcat_session_";
+	private final static String prefix_key = "redis_cluster_tomcat_session_";
 	private final static Log log = LogFactory.getLog(RedisClusterSessionManager.class);
 
 	// configuration
 	private String nodes = null;
-	private int timeout = Protocol.DEFAULT_TIMEOUT;
+	private String implementation = null;
+	private int timeout = 0;
 
 	private RedisClusterSessionSerializer serializer;
-	private JedisCluster jedisCluster = null;
+	private RedisClusterSessionOperator redisClusterSessionOperator;
 
 	public String getNodes() {
 		return nodes;
@@ -50,16 +43,20 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		this.nodes = nodes;
 	}
 
+	public String getImplementation() {
+		return implementation;
+	}
+
+	public void setImplementation(String implementation) {
+		this.implementation = implementation;
+	}
+
 	public int getTimeout() {
 		return timeout;
 	}
 
 	public void setTimeout(int timeout) {
 		this.timeout = timeout;
-	}
-
-	public JedisCluster getJedisCluster() {
-		return jedisCluster;
 	}
 
 	public RedisClusterSessionSerializer getSerializer() {
@@ -154,19 +151,13 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 
 	protected void buildClient() throws LifecycleException {
 		try {
-			Set<HostAndPort> jedisClusterNodes = new HashSet<HostAndPort>();
-			for (String server : getNodes().split(",")) {
-				URI uri = URI.create("redis://" + server);
-				jedisClusterNodes.add(new HostAndPort(uri.getHost(), uri.getPort()));
+			if("jedis".equalsIgnoreCase(implementation)) {
+				redisClusterSessionOperator = new JedisClusterImpl();
+			} else if("lettuce".equalsIgnoreCase(implementation)) {
+				redisClusterSessionOperator = new LettuceClusterImpl();
 			}
 
-			GenericObjectPoolConfig poolConfig = new JedisPoolConfig();
-			poolConfig.setMaxTotal(200);
-			poolConfig.setMaxIdle(20);
-			poolConfig.setMinIdle(5);
-			poolConfig.setMaxWaitMillis(TimeUnit.SECONDS.toMillis(timeout));
-
-			jedisCluster = new JedisCluster(jedisClusterNodes, poolConfig);
+			redisClusterSessionOperator.buildClient(nodes, timeout);
 		} catch (Exception e) {
 			log.error("Cannot initialize client", e);
 			throw new LifecycleException(e);
@@ -191,9 +182,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		setState(LifecycleState.STOPPING);
 
 		try {
-			if (jedisCluster != null) {
-				jedisCluster.close();
-			}
+			redisClusterSessionOperator.shutdown();
 		} catch (Exception e) {
 			log.error("Cannot stop", e);
 			throw new LifecycleException(e);
@@ -214,7 +203,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		Map<String, Object> attrs = new HashMap<String, Object>();
 
 		try {
-			Map<String, String> entries = jedisCluster.hgetAll(buildSessionKey(sessionId));
+			Map<String, String> entries = redisClusterSessionOperator.getMap(buildSessionKey(sessionId));
 			if(entries != null && !entries.isEmpty()) {
 				for(Entry<String, String> entry : entries.entrySet()) {
 					attrs.put(entry.getKey(), serializer.deserialize(entry.getValue()));
@@ -225,5 +214,9 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		}
 
 		return attrs;
+	}
+	
+	protected RedisClusterSessionOperator getSessionOperator() {
+		return redisClusterSessionOperator;
 	}
 }

@@ -4,7 +4,7 @@
 
 	<groupId>org.apache.tomcat</groupId>
 	<artifactId>tomcat-session-redis-cluster</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>tomcat-session-redis-cluster</name>
@@ -35,6 +35,12 @@
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
             <version>2.9.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.lettuce/lettuce-core -->
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>5.1.7.RELEASE</version>
         </dependency>
 	</dependencies>
 
