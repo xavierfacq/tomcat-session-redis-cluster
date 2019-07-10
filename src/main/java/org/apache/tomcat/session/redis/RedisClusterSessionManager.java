@@ -24,6 +24,9 @@ import org.apache.tomcat.session.redis.impl.LettuceClusterImpl;
  */
 public class RedisClusterSessionManager extends ManagerBase implements Lifecycle {
 
+	private static final String NAME = "RedisClusterSessionManager";
+	private static final String INFO = "RedisClusterSessionManager/1.0";
+
 	private final static String prefix_key = "redis_cluster_tomcat_session_";
 	private final static Log log = LogFactory.getLog(RedisClusterSessionManager.class);
 
@@ -64,8 +67,13 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 	}
 
 	@Override
+	public String getInfo() {
+        return INFO;
+	}
+
+	@Override
 	public String getName() {
-		return RedisClusterSessionManager.class.getSimpleName();
+		return NAME;
 	}
 
 	@Override
