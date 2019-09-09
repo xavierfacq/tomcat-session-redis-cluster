@@ -2,8 +2,10 @@ package org.apache.tomcat.session.redis.impl;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.tomcat.session.redis.RedisClusterSessionOperator;
 
@@ -58,8 +60,8 @@ public class LettuceClusterImpl implements RedisClusterSessionOperator {
 	}
 
 	@Override
-	public Map<String, String> getMap(String sessionId) {
-		return connection.sync().hgetall(sessionId);
+	public Map<String, String> getMap(String sessionKey) {
+		return connection.sync().hgetall(sessionKey);
 	}
 
 	@Override
@@ -85,5 +87,15 @@ public class LettuceClusterImpl implements RedisClusterSessionOperator {
 	@Override
 	public void hmset(String sessionKey, Map<String, String> map) {
 		connection.sync().hmset(sessionKey, map);
+	}
+
+	@Override
+	public Set<String> hkeys(String sessionKey) {
+		return new HashSet<String>(connection.sync().hkeys(sessionKey));
+	}
+
+	@Override
+	public String hget(String sessionKey, String field) {
+		return connection.sync().hget(sessionKey, field);
 	}
 }

@@ -45,8 +45,8 @@ public class JedisClusterImpl implements RedisClusterSessionOperator {
 	}
 
 	@Override
-	public Map<String, String> getMap(String sessionId) {
-		return jedisCluster.hgetAll(sessionId);
+	public Map<String, String> getMap(String sessionKey) {
+		return jedisCluster.hgetAll(sessionKey);
 	}
 
 	@Override
@@ -72,5 +72,15 @@ public class JedisClusterImpl implements RedisClusterSessionOperator {
 	@Override
 	public void hmset(String sessionKey, Map<String, String> map) {
 		jedisCluster.hmset(sessionKey, map);
+	}
+
+	@Override
+	public Set<String> hkeys(String sessionKey) {
+		return jedisCluster.hkeys(sessionKey);
+	}
+
+	@Override
+	public String hget(String sessionKey, String field) {
+		return jedisCluster.hget(sessionKey, field);
 	}
 }

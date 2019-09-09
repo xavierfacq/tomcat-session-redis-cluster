@@ -108,7 +108,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 
         if (session == null && sessionId != null) {
 			Map<String, Object> attrs = getMap(sessionId);
-			
+
 			if (attrs.isEmpty() || !Boolean.valueOf(String.valueOf(attrs.get("session:isValid")))) {
                 return null;
             }
@@ -223,7 +223,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 
 		return attrs;
 	}
-	
+
 	protected RedisClusterSessionOperator getSessionOperator() {
 		return redisClusterSessionOperator;
 	}

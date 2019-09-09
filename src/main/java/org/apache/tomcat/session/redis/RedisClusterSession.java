@@ -1,10 +1,13 @@
 package org.apache.tomcat.session.redis;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.ha.session.SerializablePrincipal;
@@ -44,6 +47,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setCreationTime(long time) {
+		if(this.creationTime == time) return;
 		super.setCreationTime(time);
 
 		if (this.id != null) {
@@ -52,7 +56,9 @@ public class RedisClusterSession extends StandardSession {
 				newMap.put("session:creationTime", getSerializer().serialize(creationTime));
 				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
 				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
-				getManager().getSessionOperator().hmset(getSessionKey(), newMap);
+
+				getManager().getSessionOperator()
+					.hmset(getSessionKey(), newMap);
 
 				if (getExpire() > 0) {
 					getManager().getSessionOperator()
@@ -85,6 +91,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setMaxInactiveInterval(int interval) {
+		if(this.maxInactiveInterval == interval) return;
 		super.setMaxInactiveInterval(interval);
 
 		if (this.id != null) {
@@ -99,6 +106,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setValid(boolean isValid) {
+		if(this.isValid == isValid) return;
 		super.setValid(isValid);
 
 		if (this.id != null) {
@@ -113,6 +121,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setNew(boolean isNew) {
+		if(this.isNew == isNew) return;
 		super.setNew(isNew);
 
 		if (this.id != null) {
@@ -134,7 +143,7 @@ public class RedisClusterSession extends StandardSession {
 				Map<String, String> newMap = new HashMap<String, String>(3);
 				newMap.put("session:lastAccessedTime", getSerializer().serialize(lastAccessedTime));
 				newMap.put("session:thisAccessedTime", getSerializer().serialize(thisAccessedTime));
-				newMap.put("session:isNew", getSerializer().serialize(isNew));
+
 				getManager().getSessionOperator()
 					.hmset(getSessionKey(), newMap);
 				
@@ -149,11 +158,53 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	@Override
+	public Object getAttribute(String name) {
+		if (this.id != null && name != null) {
+			try {
+				String value = getManager().getSessionOperator()
+						.hget(getSessionKey(), name);
+
+				return getSerializer().deserialize(value);
+			} catch (ClassNotFoundException|IOException exception) {
+				log.error("Cannot get attribute", exception);
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Enumeration<String> getAttributeNames() {
+		if (this.id != null) {
+			try {
+				return Collections.enumeration(getManager().getSessionOperator().hkeys(getSessionKey()));
+			} catch (Exception exception) {
+				log.error("Cannot get attribute names", exception);
+			}
+		}
+		return Collections.emptyEnumeration();
+	}
+
+	@Override
+	public String[] getValueNames() {
+		if (this.id != null) {
+			try {
+				Set<String> keys = getManager().getSessionOperator()
+						.hkeys(getSessionKey());
+
+				return keys.toArray(new String[keys.size()]);
+			} catch (Exception exception) {
+				log.error("Cannot get value names", exception);
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public void setAttribute(String name, Object value, boolean notify) {
 		// NOTE: Null value is the same as removeAttribute() - checked & called by super.setAttribute()
 
 		// retrieve current value of this attribute
-		Object o = getAttribute(name);
+		Object o = super.getAttribute(name);
 
 		super.setAttribute(name, value, notify);
 
@@ -202,7 +253,7 @@ public class RedisClusterSession extends StandardSession {
 			newMap.put("session:authType", getSerializer().serialize(authType));
 			newMap.put("session:principal", getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
 
-			for (Enumeration<String> e = getAttributeNames(); e.hasMoreElements();) {
+			for (Enumeration<String> e = super.getAttributeNames(); e.hasMoreElements();) {
 				String key = e.nextElement();
 				if(key == null) continue;
 				Object o = super.getAttribute(key);
@@ -285,6 +336,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setAuthType(String authType) {
+		if(this.authType != null && this.authType.equals(authType)) return;
 		super.setAuthType(authType);
 
 		if (this.id != null) {
@@ -299,6 +351,7 @@ public class RedisClusterSession extends StandardSession {
 
 	@Override
 	public void setPrincipal(Principal principal) {
+		if(this.principal != null && this.principal.equals(principal)) return;
 		super.setPrincipal(principal);
 
 		if (this.id != null) {
