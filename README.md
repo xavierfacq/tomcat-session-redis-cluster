@@ -62,7 +62,7 @@ Get more informations about Lettuce:
 
 ```
     cp tomcat-session-redis-cluster.jar $catalina_home/lib/
-    cp lettuce-core-5.1.7.RELEASE.jar $catalina_home/lib/
+    cp lettuce-core-5.1.8.RELEASE.jar $catalina_home/lib/
     cp netty-*.jar $catalina_home/lib/
     cp reactive-streams-1.0.2.jar $catalina_home/lib/
     cp reactor-core-3.2.8.RELEASE.jar $catalina_home/lib/
