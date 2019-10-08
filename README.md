@@ -30,7 +30,7 @@ Requirements:
 ```
 
 
-3°/ Install the session manager into your Apache Tomcat 7
+3°/ Install the session manager into your Apache Tomcat
 
 You can choose the implementation driver you prefer by setting the value of the properties "implementation". Possible values are: jedis, lettuce
 
@@ -81,7 +81,7 @@ Get more informations about Lettuce:
         nodes="172.16.50.12:7000,172.16.50.12:7001,172.16.50.12:7002" implementation="lettuce" /> 
 ```
 
-4°/ Restart your Apache Tomcat 7
+4°/ Restart your Apache Tomcat
 
 
 Enjoy!
