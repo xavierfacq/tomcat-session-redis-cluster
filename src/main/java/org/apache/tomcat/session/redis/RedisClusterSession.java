@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.ha.session.SerializablePrincipal;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.session.StandardSession;
 import org.apache.juli.logging.Log;
@@ -251,7 +249,7 @@ public class RedisClusterSession extends StandardSession {
 			newMap.put("session:isValid", getSerializer().serialize(isValid));
 			newMap.put("session:isNew", getSerializer().serialize(isNew));
 			newMap.put("session:authType", getSerializer().serialize(authType));
-			newMap.put("session:principal", getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
+			newMap.put("session:principal", getSerializer().serialize(principal));
 
 			for (Enumeration<String> e = super.getAttributeNames(); e.hasMoreElements();) {
 				String key = e.nextElement();
@@ -315,10 +313,14 @@ public class RedisClusterSession extends StandardSession {
 		}
 
 		String authType = (String) attrs.remove("session:authType");
-		this.authType = authType;
+		if(authType != null) {
+			this.authType = authType;
+		}
 
-		SerializablePrincipal principal = (SerializablePrincipal) attrs.remove("session:principal");
-		this.principal = principal == null ? null : principal.getPrincipal();
+		GenericPrincipal principal = (GenericPrincipal) attrs.remove("session:principal");
+		if(principal != null) {
+			this.principal = principal;
+		}
 
 		for (Entry<String, Object> entry : attrs.entrySet()) {
 			setAttribute(entry.getKey(), entry.getValue(), false);
@@ -326,7 +328,7 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	private int getExpire() {
-		int expire = ((Context) manager.getContainer()).getSessionTimeout() * 60;
+		int expire = getManager().getContextInternal().getSessionTimeout() * 60;
 		return expire > 0 ? expire : 0;
 	}
 
@@ -357,7 +359,7 @@ public class RedisClusterSession extends StandardSession {
 		if (this.id != null) {
 			try {
 				getManager().getSessionOperator()
-					.hset(getSessionKey(), "session:principal", getSerializer().serialize(principal == null ? null : SerializablePrincipal.createPrincipal((GenericPrincipal) principal)));
+					.hset(getSessionKey(), "session:principal", getSerializer().serialize(principal));
 			} catch (Exception exception) {
 				log.error("Cannot set principal", exception);
 			}

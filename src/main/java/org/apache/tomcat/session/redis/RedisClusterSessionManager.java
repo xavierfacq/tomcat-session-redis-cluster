@@ -1,6 +1,7 @@
 package org.apache.tomcat.session.redis;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +26,6 @@ import org.apache.tomcat.session.redis.impl.LettuceClusterImpl;
 public class RedisClusterSessionManager extends ManagerBase implements Lifecycle {
 
 	private static final String NAME = "RedisClusterSessionManager";
-	private static final String INFO = "RedisClusterSessionManager/1.0";
 
 	private final static String prefix_key = "redis_cluster_tomcat_session_";
 	private final static Log log = LogFactory.getLog(RedisClusterSessionManager.class);
@@ -67,11 +67,6 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 	}
 
 	@Override
-	public String getInfo() {
-        return INFO;
-	}
-
-	@Override
 	public String getName() {
 		return NAME;
 	}
@@ -91,7 +86,7 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		session.setNew(true);
 		session.setValid(true);
 		session.setCreationTime(System.currentTimeMillis());
-		session.setMaxInactiveInterval(((Context) getContainer()).getSessionTimeout() * 60);
+		session.setMaxInactiveInterval(getContextInternal().getSessionTimeout() * 60);
 
 		if (sessionId == null) {
 			sessionId = generateSessionId();
@@ -100,6 +95,27 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 		session.setId(sessionId);
 
 		return session;
+	}
+
+	/**
+	 * This method is to be compliant with Tomcat 7 and Tomcat 8 
+	 * 
+	 * @return
+	 */
+	protected Context getContextInternal() {
+		try {
+			Method method = this.getClass().getSuperclass().getDeclaredMethod("getContext");
+			return (Context) method.invoke(this);
+		} catch (Exception ex) {
+			try {
+				Method method = this.getClass().getSuperclass().getDeclaredMethod("getContainer");
+				return (Context) method.invoke(this);
+			} catch (Exception exception) {
+				log.error("Cannot find context", exception);
+			}
+		}
+
+		throw new RuntimeException("Error occurred while looking for a context");
 	}
 
 	@Override
@@ -173,8 +189,9 @@ public class RedisClusterSessionManager extends ManagerBase implements Lifecycle
 
 		Loader loader = null;
 
-		if (getContainer() != null) {
-			loader = getContainer().getLoader();
+		Context context = getContextInternal();
+		if (context != null) {
+			loader = context.getLoader();
 		}
 
 		if (loader != null) {
