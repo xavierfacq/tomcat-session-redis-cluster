@@ -12,6 +12,7 @@ Requirements:
 ## Supports:
    - Apache Tomcat 7
    - Apache Tomcat 8
+   - Apache Tomcat 9
 
 
 ## How do I use it?
