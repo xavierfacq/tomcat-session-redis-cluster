@@ -6,7 +6,7 @@ This manager implements the serialization for authType and Principal, that can b
 Requirements:
 - JDK, Maven
 - an Apache Tomcat 7 / 8
-- a Redis cluster (tested with 3.2)
+- a Redis cluster (tested with 3.2 and 5.0.5)
 
 
 ## Supports:
