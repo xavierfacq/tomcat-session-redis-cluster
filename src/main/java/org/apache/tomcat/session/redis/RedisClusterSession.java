@@ -183,6 +183,7 @@ public class RedisClusterSession extends StandardSession {
 	}
 
 	@Override
+    @Deprecated
 	public String[] getValueNames() {
 		if (this.id != null) {
 			try {
