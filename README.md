@@ -4,7 +4,7 @@ This project provides an Apache Tomcat Manager able to save and restore sessions
 This manager implements the serialization for authType and Principal, that can be usefull when a BASIC_AUTH is enabled.
 
 Requirements:
-- JDK, Maven
+- JDK (8, 9, 11), Maven
 - an Apache Tomcat
 - a Redis cluster
 
@@ -71,10 +71,10 @@ Get more informations about Lettuce:
 
 ```
     cp tomcat-session-redis-cluster.jar $catalina_home/lib/
-    cp lettuce-core-5.1.8.RELEASE.jar $catalina_home/lib/
+    cp lettuce-core-5.2.1.RELEASE.jar $catalina_home/lib/
     cp netty-*.jar $catalina_home/lib/
     cp reactive-streams-1.0.2.jar $catalina_home/lib/
-    cp reactor-core-3.2.8.RELEASE.jar $catalina_home/lib/
+    cp reactor-core-3.2.11.RELEASE.jar $catalina_home/lib/
 
 ```
 
