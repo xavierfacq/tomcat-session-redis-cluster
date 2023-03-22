@@ -15,7 +15,7 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <tomcat-version>9.0.27</tomcat-version>
+        <tomcat-version>9.0.72</tomcat-version>
 	</properties>
 
 	<dependencies>
